@@ -3,7 +3,6 @@ package storage
 import (
 	"context"
 	"github.com/minio/minio-go/v7"
-	"os"
 )
 
 type Storage struct {
@@ -18,15 +17,8 @@ func NewStorage(client *minio.Client, bucket string) *Storage {
 	}
 }
 
-func (s *Storage) Put(ctx context.Context, filename, contentType string, file *os.File) error {
-	stat, err := file.Stat()
-	if err != nil {
-		return err
-	}
-
-	_, err = s.client.PutObject(ctx, s.bucket, filename, file, stat.Size(), minio.PutObjectOptions{
-		ContentType: contentType,
-	})
+func (s *Storage) Put(ctx context.Context, filename, filepath string) error {
+	_, err := s.client.FPutObject(ctx, s.bucket, filename, filepath, minio.PutObjectOptions{})
 
 	return err
 }

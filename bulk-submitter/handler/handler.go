@@ -3,16 +3,18 @@ package handler
 import (
 	"bulk-submitter/storage"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
-	"github.com/gabriel-vasile/mimetype"
-	"github.com/google/uuid"
+	"io"
 	"log"
+	"mime"
 	"os"
 	"path/filepath"
 )
 
 const (
-	expectedMIME     = "image/jpeg"
+	expectedMimetype = "image/jpeg"
 	defaultExtension = ".jpg"
 )
 
@@ -28,18 +30,7 @@ func NewBulkSubmitter(storage *storage.Storage) BulkSubmitter {
 
 func (bs *BulkSubmitter) Submit(rootPath string) {
 	err := filepath.Walk(rootPath, func(path string, info os.FileInfo, err error) error {
-		if info.IsDir() {
-			return nil
-		}
-
-		mime, err := mimetype.DetectFile(path)
-		if err != nil {
-			log.Println(fmt.Sprintf("error on open %s", path))
-			return err
-		}
-
-		if !mime.Is(expectedMIME) {
-			log.Println(fmt.Sprintf("ignored %s", path))
+		if info.IsDir() || mime.TypeByExtension(filepath.Ext(path)) != expectedMimetype {
 			return nil
 		}
 
@@ -52,8 +43,15 @@ func (bs *BulkSubmitter) Submit(rootPath string) {
 			_ = file.Close()
 		}()
 
-		filename := fmt.Sprintf("%s%s", uuid.New().String(), defaultExtension)
-		if err = bs.storage.Put(context.Background(), filename, mime.String(), file); err != nil {
+		hash := sha256.New()
+		_, err = io.Copy(hash, file)
+		if err != nil {
+			log.Println(fmt.Sprintf("error on calculate file hash %s", path))
+			return err
+		}
+
+		filename := fmt.Sprintf("%s%s", hex.EncodeToString(hash.Sum(nil)), defaultExtension)
+		if err = bs.storage.Put(context.Background(), filename, path); err != nil {
 			log.Println(fmt.Sprintf("error while uploading %s", path))
 			return err
 		}
