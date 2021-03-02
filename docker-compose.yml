@@ -14,6 +14,11 @@ services:
       - "8080:8080"
     depends_on:
       - postgres
+  worker:
+    build: ./worker
+    env_file: .env
+    depends_on:
+      - minio
   frontend:
     build: ./frontend
     env_file: .env

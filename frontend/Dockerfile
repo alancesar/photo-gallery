@@ -1,7 +1,4 @@
-FROM node:14-alpine
-WORKDIR /usr/app
-COPY . ./
-RUN yarn
-RUN yarn build
-RUN yarn global add serve
-CMD ["serve", "-s", "build"]
+FROM nginx:1.16-alpine
+COPY ./build /var/www
+COPY nginx.conf /etc/nginx/nginx.conf
+ENTRYPOINT ["nginx","-g","daemon off;"]
