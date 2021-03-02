@@ -24,10 +24,7 @@ const (
 )
 
 func main() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatalln("error loading .env file")
-	}
+	_ = godotenv.Load()
 
 	client, err := minio.New(os.Getenv(minioEndpointEnv), &minio.Options{
 		Creds:  credentials.NewStaticV4(os.Getenv(minioRootUserEnv), os.Getenv(minioRootPasswordEnv), ""),
