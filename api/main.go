@@ -34,10 +34,7 @@ const (
 )
 
 func main() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatalln("error loading .env file")
-	}
+	_ = godotenv.Load()
 
 	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable", os.Getenv(dbHostEnv),
 		os.Getenv(dbUserEnv), os.Getenv(dbPasswordEnv), os.Getenv(dbNameEnv), os.Getenv(dbPortEnv))
