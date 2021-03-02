@@ -17,10 +17,11 @@ public class MinioStorageService implements StorageService {
         this.client = client;
     }
 
-    public InputStream get(String filename) throws Exception {
+    public InputStream getChunk(String filename, long length) throws Exception {
         var args = GetObjectArgs.builder()
                 .bucket(bucketName)
                 .object(filename)
+                .length(length)
                 .build();
 
         return client.getObject(args);

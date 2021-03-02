@@ -14,6 +14,7 @@ import java.util.Map;
 public class ExifMetadataController {
     public static final String TEMP_PREFIX = "exif-";
     public static final String TEMP_SUFFIX = ".tmp";
+    public static final long CHUNK_SIZE = 1024 * 128 - 1;
     public static final Map<String, String> ERROR_MESSAGE = Map.of("message", "file not found");
 
     private final StorageService service;
@@ -27,7 +28,7 @@ public class ExifMetadataController {
     @GetMapping("{filename}")
     @ResponseBody
     public Map<String, String> getExif(@PathVariable String filename) throws Exception {
-        var inputStream = service.get(filename);
+        var inputStream = service.getChunk(filename, CHUNK_SIZE);
         var tempFile = Files.createTempFile(TEMP_PREFIX, TEMP_SUFFIX);
         var outputStream = new FileOutputStream(tempFile.toFile());
         inputStream.transferTo(outputStream);

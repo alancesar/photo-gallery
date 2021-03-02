@@ -4,5 +4,5 @@ import java.io.InputStream;
 
 public interface StorageService {
 
-    InputStream get(String id) throws Exception;
+    InputStream getChunk(String id, long length) throws Exception;
 }
