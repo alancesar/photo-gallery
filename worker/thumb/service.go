@@ -2,9 +2,10 @@ package thumb
 
 import (
 	"context"
+	"github.com/disintegration/imaging"
 	"io"
+	"io/ioutil"
 	"os"
-	"photo-gallery/photo"
 	"photo-gallery/storage"
 )
 
@@ -24,7 +25,7 @@ func NewThumbsService(s *storage.Storage) *Service {
 }
 
 func (s *Service) CreateThumbs(ctx context.Context, input io.Reader, filename, contentType string) error {
-	resized, err := photo.Fit(input, thumbWidth, thumbHeight)
+	resized, err := fit(input, thumbWidth, thumbHeight)
 	if err != nil {
 		return err
 	}
@@ -33,4 +34,20 @@ func (s *Service) CreateThumbs(ctx context.Context, input io.Reader, filename, c
 	}()
 
 	return s.storage.Put(ctx, filename, contentType, resized)
+}
+
+func fit(reader io.Reader, width, height int) (*os.File, error) {
+	img, err := imaging.Decode(reader)
+	if err != nil {
+		return nil, err
+	}
+
+	resized := imaging.Fit(img, width, height, imaging.Lanczos)
+	output, err := ioutil.TempFile("", "thumb.*.jpg")
+	if err != nil {
+		return nil, err
+	}
+
+	err = imaging.Save(resized, output.Name())
+	return output, err
 }
