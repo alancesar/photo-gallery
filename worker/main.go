@@ -8,7 +8,6 @@ import (
 	"log"
 	"os"
 	"worker/callback"
-	"worker/exif"
 	"worker/listener"
 	"worker/storage"
 	"worker/thumb"
@@ -20,7 +19,6 @@ const (
 	minioRootPasswordEnv = "MINIO_ROOT_PASSWORD"
 	photosBucketEnv      = "PHOTOS_BUCKET"
 	thumbsBucketEnv      = "THUMBS_BUCKET"
-	exifBucketEnv        = "EXIF_BUCKET"
 
 	createdEvent = "s3:ObjectCreated:*"
 )
@@ -39,8 +37,7 @@ func main() {
 	photosStorage := storage.NewStorage(client, os.Getenv(photosBucketEnv))
 	thumbsStorage := storage.NewStorage(client, os.Getenv(thumbsBucketEnv))
 	thumbsService := thumb.NewService(thumbsStorage)
-	exifService := exif.NewService(os.Getenv(photosBucketEnv), os.Getenv(exifBucketEnv), client)
-	handler := callback.NewHandler(photosStorage, thumbsService, exifService)
+	handler := callback.NewHandler(photosStorage, thumbsService)
 
 	photosListener := listener.NewListener(os.Getenv(photosBucketEnv), client)
 	photosListener.Listen(context.Background(), handler.Handle, createdEvent)

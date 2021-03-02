@@ -3,7 +3,6 @@ package callback
 import (
 	"context"
 	"log"
-	"worker/exif"
 	"worker/storage"
 	"worker/thumb"
 )
