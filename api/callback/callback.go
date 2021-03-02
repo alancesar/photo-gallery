@@ -4,60 +4,51 @@ import (
 	"context"
 	"github.com/google/uuid"
 	"log"
-	"os"
 	"photo-gallery/database"
 	"photo-gallery/metadata"
 	"photo-gallery/photo"
 	"photo-gallery/storage"
+	"photo-gallery/thumb"
 )
 
-const (
-	thumbWidth  = 800
-	thumbHeight = 600
-)
-
-type Handler struct {
-	db              *database.Database
-	photosStorage   *storage.Storage
-	thumbsStorage   *storage.Storage
-	metadataService *metadata.Service
+type PhotoHandler struct {
+	photosStorage *storage.Storage
+	service       *thumb.Service
 }
 
-func NewCallbackHandler(
-	db *database.Database,
-	photosStorage *storage.Storage,
-	thumbsStorage *storage.Storage,
-	metadataService *metadata.Service,
-) *Handler {
-	return &Handler{
-		db:              db,
-		photosStorage:   photosStorage,
-		thumbsStorage:   thumbsStorage,
-		metadataService: metadataService,
+func NewPhotoCallbackHandler(photosStorage *storage.Storage, service *thumb.Service) *PhotoHandler {
+	return &PhotoHandler{
+		photosStorage: photosStorage,
+		service:       service,
 	}
 }
 
-func (h *Handler) Handle(ctx context.Context, key, contentType string) {
+func (h *PhotoHandler) Handle(ctx context.Context, key, contentType string) {
 	item, err := h.photosStorage.Get(ctx, key)
 	if err != nil {
 		log.Println(err)
 		return
 	}
 
-	resized, err := photo.Fit(item, thumbWidth, thumbHeight)
-	if err != nil {
+	if err = h.service.CreateThumbs(ctx, item, key, contentType); err != nil {
 		log.Println(err)
 		return
 	}
-	defer func() {
-		_ = os.Remove(resized.Name())
-	}()
+}
 
-	if err = h.thumbsStorage.Put(ctx, key, contentType, resized); err != nil {
-		log.Println(err)
-		return
+type ThumbHandler struct {
+	db              *database.Database
+	metadataService *metadata.Service
+}
+
+func NewThumbHandler(db *database.Database, metadataService *metadata.Service) *ThumbHandler {
+	return &ThumbHandler{
+		db:              db,
+		metadataService: metadataService,
 	}
+}
 
+func (h ThumbHandler) Handle(_ context.Context, key, _ string) {
 	exif, err := h.metadataService.GetExif(key)
 	if err != nil {
 		log.Println(err)

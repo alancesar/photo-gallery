@@ -17,6 +17,7 @@ import (
 	"photo-gallery/listener"
 	"photo-gallery/metadata"
 	"photo-gallery/storage"
+	"photo-gallery/thumb"
 )
 
 const (
@@ -61,10 +62,14 @@ func main() {
 	photosStorage := storage.NewStorage(client, os.Getenv(photosBucketEnv))
 	thumbsStorage := storage.NewStorage(client, os.Getenv(thumbsBucketEnv))
 	metadataService := metadata.NewService(os.Getenv(metadataApiEnv), http.DefaultClient)
-	callbackHandler := callback.NewCallbackHandler(db, photosStorage, thumbsStorage, metadataService)
+	thumbsService := thumb.NewThumbsService(thumbsStorage)
+	photoCallbackHandler := callback.NewPhotoCallbackHandler(photosStorage, thumbsService)
+	thumbCallbackHandler := callback.NewThumbHandler(db, metadataService)
 	photosListener := listener.NewListener(os.Getenv(photosBucketEnv), client)
+	thumbsListener := listener.NewListener(os.Getenv(thumbsBucketEnv), client)
 
-	go photosListener.Listen(context.Background(), callbackHandler.Handle, createdEvent)
+	go photosListener.Listen(context.Background(), photoCallbackHandler.Handle, createdEvent)
+	go thumbsListener.Listen(context.Background(), thumbCallbackHandler.Handle, createdEvent)
 
 	engine := gin.Default()
 	engine.Use(cors.Default())
