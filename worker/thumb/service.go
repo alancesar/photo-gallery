@@ -6,7 +6,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
-	"photo-gallery/storage"
+	"worker/storage"
 )
 
 const (
@@ -18,7 +18,7 @@ type Service struct {
 	storage *storage.Storage
 }
 
-func NewThumbsService(s *storage.Storage) *Service {
+func NewService(s *storage.Storage) *Service {
 	return &Service{
 		storage: s,
 	}

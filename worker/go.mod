@@ -1,4 +1,4 @@
-module photo-gallery
+module worker
 
 go 1.16
 

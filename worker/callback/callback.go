@@ -3,8 +3,9 @@ package callback
 import (
 	"context"
 	"log"
-	"photo-gallery/storage"
-	"photo-gallery/thumb"
+	"worker/exif"
+	"worker/storage"
+	"worker/thumb"
 )
 
 type Handler struct {
