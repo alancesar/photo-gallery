@@ -16,8 +16,6 @@ import (
 	"photo-gallery/handler"
 	"photo-gallery/listener"
 	"photo-gallery/metadata"
-	"photo-gallery/storage"
-	"photo-gallery/thumb"
 )
 
 const (
@@ -29,7 +27,6 @@ const (
 	minioEndpointEnv     = "MINIO_ENDPOINT"
 	minioRootUserEnv     = "MINIO_ROOT_USER"
 	minioRootPasswordEnv = "MINIO_ROOT_PASSWORD"
-	photosBucketEnv      = "PHOTOS_BUCKET"
 	thumbsBucketEnv      = "THUMBS_BUCKET"
 	metadataApiEnv       = "METADATA_API"
 
@@ -59,17 +56,11 @@ func main() {
 		log.Fatalln(err)
 	}
 
-	photosStorage := storage.NewStorage(client, os.Getenv(photosBucketEnv))
-	thumbsStorage := storage.NewStorage(client, os.Getenv(thumbsBucketEnv))
 	metadataService := metadata.NewService(os.Getenv(metadataApiEnv), http.DefaultClient)
-	thumbsService := thumb.NewThumbsService(thumbsStorage)
-	photoCallbackHandler := callback.NewPhotoCallbackHandler(photosStorage, thumbsService)
-	thumbCallbackHandler := callback.NewThumbHandler(db, metadataService)
-	photosListener := listener.NewListener(os.Getenv(photosBucketEnv), client)
+	callbackHandler := callback.NewHandler(db, metadataService)
 	thumbsListener := listener.NewListener(os.Getenv(thumbsBucketEnv), client)
 
-	go photosListener.Listen(context.Background(), photoCallbackHandler.Handle, createdEvent)
-	go thumbsListener.Listen(context.Background(), thumbCallbackHandler.Handle, createdEvent)
+	go thumbsListener.Listen(context.Background(), callbackHandler.Handle, createdEvent)
 
 	engine := gin.Default()
 	engine.Use(cors.Default())
