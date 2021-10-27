@@ -1,0 +1,9 @@
+[submodule "photo-gallery-worker"]
+	path = photo-gallery-worker
+	url = git@github.com:alancesar/photo-gallery-worker.git
+[submodule "photo-gallery-metadata"]
+	path = photo-gallery-metadata
+	url = git@github.com:alancesar/photo-gallery-metadata.git
+[submodule "photo-gallery-api"]
+	path = photo-gallery-api
+	url = git@github.com:alancesar/photo-gallery-api.git

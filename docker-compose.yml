@@ -1,0 +1,63 @@
+version: "3"
+services:
+  mongodb:
+    image: mongo:5.0.3
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb-data:/data/db
+
+  postgres:
+    image: postgres:13
+    restart: always
+    environment:
+      - POSTGRES_PASSWORD=photo-gallery
+      - POSTGRES_USER=photo-gallery
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+  
+  rabbitmq:
+    image: rabbitmq:3.9-management
+    restart: always
+    ports:
+      - "5672:5672"
+      - "9090:15672"
+  
+  minio:
+    image: minio/minio:latest
+    restart: always
+    environment:
+      - MINIO_ROOT_USER=photo-gallery
+      - MINIO_ROOT_PASSWORD=photo-gallery
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio-data:/data
+    depends_on:
+      - rabbitmq
+
+  mc:
+    image: minio/mc
+    volumes:
+      - ./policy:/var
+    env_file: ./.env
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      /usr/bin/mc alias set photo-gallery/ http://${MINIO_ENDPOINT} ${MINIO_ROOT_USER} ${MINIO_ROOT_PASSWORD};
+      /usr/bin/mc mb photo-gallery/photos;
+      /usr/bin/mc mb photo-gallery/thumbs;
+      /usr/bin/mc policy set-json /var/photos.json photo-gallery/photos;
+      /usr/bin/mc policy set-json /var/thumbs.json photo-gallery/thumbs;
+      exit 0;
+      "
+volumes:
+  minio-data:
+  postgres-data:
+  mongodb-data:
